@@ -6,7 +6,7 @@ Based on the code from [here](http://notes.eatonphil.com/writing-a-simple-json-p
 ## usage
 
 ```AutoIt3
-#include "au3json.au3"
+#include "json.au3"
 
 $sJson = '{"name":"John","age":31,"city":"New York"}'
 
