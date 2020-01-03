@@ -1,3 +1,5 @@
+#include-once
+
 Global Const $JSON_COMMA = ','
 Global Const $JSON_COLON = ':'
 Global Const $JSON_LEFTBRACKET = '['
