@@ -10,7 +10,7 @@ Based on the code from [here](http://notes.eatonphil.com/writing-a-simple-json-p
 
 $sJson = '{"name":"John","age":31,"city":"New York"}'
 
-$oJson = json_parse(json_lex($sJson))
+$oJson = json_parse(json_lex($sJson))[0]
 
 MsgBox(0, "", $oJson.Item('name'))
 ```
