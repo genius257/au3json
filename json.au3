@@ -89,7 +89,13 @@ Func json_lex_string($string)
         Else
             $json_string &= $c
             If $c == '\' Then
-                $json_string &= StringMid($string, $i+1, 1)
+                $c = StringMid($string, $i+1, 1)
+                If $c == 'u' Then
+                    $c = StringMid($string, $i+1, 5)
+                    If Not StringRegExp($c, '^u[0-9A-Za-z]{4}$') Then Exit ConsoleWriteError('Badly formatted escape hex value')
+                    $i += 4
+                EndIf
+                $json_string &= $c
                 $i += 1
             EndIf
         EndIf
@@ -178,6 +184,13 @@ Func json_parse($tokens, $is_root = False)
         $tokens = $tokens.Clone()
         $tokens.RemoveAt(0)
         Return json_parse_object($tokens)
+    ElseIf IsString($t) Then
+        Local $tmp[2]
+        $tmp[0] = json_parse_string($t)
+        $tokens = $tokens.Clone()
+        $tokens.RemoveAt(0)
+        $tmp[1] = $tokens
+        Return $tmp
     Else
         Local $tmp[2]
         $tmp[0] = $t
@@ -274,6 +287,47 @@ Func json_parse_object($tokens)
     WEnd
 
     Exit ConsoleWriteError(StringFormat('Expected end-of-object bracket'))
+EndFunc
+
+Func json_parse_string($json_string)
+    Local $i, $c, $d, $string = ""
+    For $i=1 To StringLen($json_string)
+        $c = StringMid($json_string, $i, 1)
+        If $c == "\" Then
+            $d = StringMid($json_string, $i+1, 1)
+            Switch ($d)
+                Case "b" ;backspace
+                    $string &= Chr(8)
+                Case "f" ;form feed
+                    $string &= Chr(12)
+                Case "n" ;newline
+                    $string &= Chr(10)
+                Case "r" ;carriage return
+                    $string &= Chr(13)
+                Case "t" ;tab
+                    $string &= Chr(9)
+                Case "u"
+                    $string &= ChrW(Dec(StringMid($json_string, $i+2, 4), 1))
+                    $i += 4
+                Case '"'
+                    ContinueCase
+                Case '\'
+                    ContinueCase
+                Case Else
+                    $string &= $d
+            EndSwitch
+            $i += 1
+        Else
+            $string &= $c
+            If $c == '\' Then
+                $string &= StringMid($json_string, $i+1, 1)
+                $i += 1
+            EndIf
+        EndIf
+    Next
+
+
+    Return $string
 EndFunc
 
 Func ArrayPush(ByRef $array, $vData)
