@@ -108,15 +108,8 @@ Func json_lex_number($string)
     Local $json_number = ''
     Local $tmp[2]
 
-    Local $i, $c
-    For $i=1 To StringLen($string)
-        $c = StringMid($string, $i, 1)
-        If StringRegExp($c, '[0-9\-e\.]') Then
-            $json_number &= $c
-        Else
-            ExitLoop
-        EndIf
-    Next
+    $json_number = StringRegExp($string, '^-?(0|[1-9][0-9]*)(\.[0-9]+)?([eE][+-]?[0-9]+)?', 2)
+    $json_number = (@error <> 0) ? "" : $json_number[0]
 
     Local $rest = StringMid($string, StringLen($json_number)+1)
 
