@@ -214,6 +214,8 @@ Func json_parse_array($tokens)
         Return $tmp
     EndIf
 
+    Local $json_tokens
+    Local $json
     While True
         $json_tokens = json_parse($tokens)
         $json = $json_tokens[0]
