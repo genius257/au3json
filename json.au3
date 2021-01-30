@@ -1,4 +1,7 @@
 #include-once
+#include <StringConstants.au3>
+;~ #AutoIt3Wrapper_Add_Constants=n
+
 ;~ https://github.com/genius257/au3json/
 
 ;~ #AutoIt3Wrapper_Run_AU3Check=Y
