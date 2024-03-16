@@ -347,7 +347,7 @@ Func _json_encode_pretty($vJson)
     Return __json_encode_pretty($vJson, 0)
 EndFunc
 
-Global $json_pretty_sIndentation = "    "
+Global $__g_json_sPrettyIndentation = "    "
 
 Func __json_encode_pretty(ByRef $v, $iLevel)
     Switch VarGetType($v)
@@ -376,18 +376,18 @@ EndFunc
 Func __json_encode_map_pretty(ByRef $map, $iLevel)
     Local $sJson = "{" & @CRLF
     For $key In MapKeys($map)
-        $sJson &= _StringRepeat($json_pretty_sIndentation, $iLevel + 1) & __json_encode_string($key) & ":" & __json_encode_pretty($map[$key], $iLevel + 1) & "," & @CRLF
+        $sJson &= _StringRepeat($__g_json_sPrettyIndentation, $iLevel + 1) & __json_encode_string($key) & ": " & __json_encode_pretty($map[$key], $iLevel + 1) & "," & @CRLF
         IF @error <> 0 Then Return SetError(@error, @extended, Null)
     Next
-    Return StringMid($sJson, 1, StringLen($sJson) - 3) & _StringRepeat($json_pretty_sIndentation, $iLevel) & @CRLF & "}"
+    Return StringMid($sJson, 1, StringLen($sJson) - 3) & _StringRepeat($__g_json_sPrettyIndentation, $iLevel) & @CRLF & "}"
 EndFunc
 
 Func __json_encode_array_pretty(ByRef $array, $iLevel)
     Local $sJson = "[" & @CRLF
     For $key In $array
         ;FIXME support multi-dimensional arrays
-        $sJson &= _StringRepeat($json_pretty_sIndentation, $iLevel + 1) & __json_encode_pretty($key, $iLevel + 1) & "," & @CRLF
+        $sJson &= _StringRepeat($__g_json_sPrettyIndentation, $iLevel + 1) & __json_encode_pretty($key, $iLevel + 1) & "," & @CRLF
         IF @error <> 0 Then Return SetError(@error, @extended, Null)
     Next
-    Return StringMid($sJson, 1, StringLen($sJson) - 3) & @CRLF & _StringRepeat($json_pretty_sIndentation, $iLevel) & "]"
+    Return StringMid($sJson, 1, StringLen($sJson) - 3) & @CRLF & _StringRepeat($__g_json_sPrettyIndentation, $iLevel) & "]"
 EndFunc
