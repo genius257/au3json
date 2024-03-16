@@ -148,6 +148,7 @@ Func __json_decode_array(ByRef $sJson, ByRef $iIndex)
                 Return $array
             Case ' ', @LF, @CR, @TAB
                 $iIndex += 1
+                ContinueLoop
             Case ''
                 ConsoleWriteError(@ScriptLineNumber&@TAB&$iIndex&@CRLF)
                 Return SetError(1, 1, Null)
