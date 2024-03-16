@@ -1,8 +1,6 @@
 # au3json
 A small JSON library for AutoIt3
 
-Based on the code from [here](http://notes.eatonphil.com/writing-a-simple-json-parser.html)
-
 ## usage
 
 ```AutoIt3
@@ -10,7 +8,10 @@ Based on the code from [here](http://notes.eatonphil.com/writing-a-simple-json-p
 
 $sJson = '{"name":"John","age":31,"city":"New York"}'
 
-$oJson = json_parse(json_lex($sJson))[0]
+$oJson = _json_decode($sJson)
 
-MsgBox(0, "", $oJson.Item('name'))
+MsgBox(0, "", $oJson['name'])
+
+; change value of $__g_json_sPrettyIndentation, to adjust identation in pretty print
+ConsoleWrite(_json_encode_pretty($oJson)&@CRLF)
 ```
