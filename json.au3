@@ -1,3 +1,6 @@
+#include-once
+#include <String.au3>
+
 Func json_decode($sJson)
     local $iIndex = 1
     Return __json_decode($sJson, $iIndex)
@@ -231,10 +234,116 @@ Func __json_decode_null(ByRef $sJson, ByRef $iIndex)
     Return Null
 EndFunc
 
-Func json_encode()
-    ;
+Func json_encode($vJson)
+    Return __json_encode($vJson)
 EndFunc
 
-Func json_encode_pretty()
-    ;
+Func __json_encode(ByRef $v)
+    Switch VarGetType($v)
+        Case "Map"
+            Return __json_encode_map($v)
+        Case "Array"
+            Return __json_encode_array($v)
+        Case "String"
+            Return __json_encode_string($v)
+        Case "Int32"
+            ContinueCase
+        Case "Int64"
+            ContinueCase
+        Case "Double"
+            Return __json_encode_number($v)
+        Case "Bool"
+            Return __json_encode_bool($v)
+        Case "Keyword"
+            If Not ($v = Null) Then ContinueCase
+            Return __json_encode_null($v)
+        Case Else
+            ConsoleWriteError("Unsupported type: "&VarGetType($v)&@CRLF)
+            Return SetError(1, 1, Null)
+    EndSwitch
+EndFunc
+
+Func __json_encode_map(ByRef $map)
+    Local $sJson = "{"
+    For $key In MapKeys($map)
+        $sJson &= __json_encode_string($key) & ":" & __json_encode($map[$key]) & ","
+        IF @error <> 0 Then Return SetError(@error, @extended, Null)
+    Next
+    Return StringMid($sJson, 1, StringLen($sJson) - 1) & "}"
+EndFunc
+
+Func __json_encode_array(ByRef $array)
+    Local $sJson = "["
+    For $key In $array
+        ;FIXME support multi-dimensional arrays
+        $sJson &= __json_encode($key) & ","
+        IF @error <> 0 Then Return SetError(@error, @extended, Null)
+    Next
+    Return StringMid($sJson, 1, StringLen($sJson) - 1) & "]"
+EndFunc
+
+Func __json_encode_string(ByRef $s)
+    Return '"' & StringRegExpReplace($s, '["\\]', '\\$0') & '"'
+EndFunc
+
+Func __json_encode_number(ByRef $n)
+    Return String($n)
+EndFunc
+
+Func __json_encode_bool(ByRef $b)
+    Return $b ? "true" : "false"
+EndFunc
+
+Func __json_encode_null(ByRef $n)
+    Return "null"
+EndFunc
+
+Func json_encode_pretty($vJson)
+    Return __json_encode_pretty($vJson, 0)
+EndFunc
+
+Global $json_pretty_sIndentation = "    "
+
+Func __json_encode_pretty(ByRef $v, $iLevel)
+    Switch VarGetType($v)
+        Case "Map"
+            Return __json_encode_map_pretty($v, $iLevel)
+        Case "Array"
+            Return __json_encode_array_pretty($v, $iLevel)
+        Case "String"
+            Return __json_encode_string($v)
+        Case "Int32"
+            ContinueCase
+        Case "Int64"
+            ContinueCase
+        Case "Double"
+            Return __json_encode_number($v)
+        Case "Bool"
+            Return __json_encode_bool($v)
+        Case "Keyword"
+            If Not ($v = Null) Then ContinueCase
+            Return __json_encode_null($v)
+        Case Else
+            ConsoleWriteError("Unsupported type: "&VarGetType($v)&@CRLF)
+            Return SetError(1, 1, Null)
+    EndSwitch
+EndFunc
+
+Func __json_encode_map_pretty(ByRef $map, $iLevel)
+    Local $sJson = "{" & @CRLF
+    For $key In MapKeys($map)
+        $sJson &= _StringRepeat($json_pretty_sIndentation, $iLevel + 1) & __json_encode_string($key) & ":" & __json_encode_pretty($map[$key], $iLevel + 1) & "," & @CRLF
+        IF @error <> 0 Then Return SetError(@error, @extended, Null)
+    Next
+    Return StringMid($sJson, 1, StringLen($sJson) - 3) & _StringRepeat($json_pretty_sIndentation, $iLevel) & @CRLF & "}"
+EndFunc
+
+Func __json_encode_array_pretty(ByRef $array, $iLevel)
+    Local $sJson = "[" & @CRLF
+    For $key In $array
+        ;FIXME support multi-dimensional arrays
+        $sJson &= _StringRepeat($json_pretty_sIndentation, $iLevel + 1) & __json_encode_pretty($key, $iLevel + 1) & "," & @CRLF
+        IF @error <> 0 Then Return SetError(@error, @extended, Null)
+    Next
+    Return StringMid($sJson, 1, StringLen($sJson) - 3) & @CRLF & _StringRepeat($json_pretty_sIndentation, $iLevel) & "]"
 EndFunc
