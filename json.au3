@@ -186,25 +186,74 @@ Func __json_decode_array(ByRef $sJson, ByRef $iIndex)
 EndFunc
 
 Func __json_decode_number(ByRef $sJson, ByRef $iIndex)
-    ;FIXME: implement in a better way
     Local $number = ""
+    If StringMid($sJson, $iIndex, 1) = '-' Then
+        $number &= StringMid($sJson, $iIndex, 1)
+        $iIndex += 1
+    EndIf
+
+    If Not StringIsDigit(StringMid($sJson, $iIndex, 1)) Then Return SetError(1, @ScriptLineNumber, 'Expected digit, found: "' & StringMid($sJson, $iIndex, 1) & '" at offset: ' & $iIndex)
+
     While 1
         Switch StringMid($sJson, $iIndex, 1)
-            Case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.', 'e', 'E', '-', '+'
+            Case '0' To '9'
                 $number &= StringMid($sJson, $iIndex, 1)
                 $iIndex += 1
-            Case ''
-                ConsoleWriteError(@ScriptLineNumber&@TAB&$iIndex&@CRLF)
-                Return SetError(1, 1, Null)
+                ContinueLoop
             Case Else
-                $number = Execute($number)
-                If @error <> 0 Then
-                    ConsoleWriteError(@ScriptLineNumber&@TAB&$iIndex&@CRLF)
-                    Return SetError(1, 1, Null)
-                EndIf
-                Return $number
+                ExitLoop
         EndSwitch
     WEnd
+
+    ;Fraction
+    If StringMid($sJson, $iIndex, 1) = '.' Then
+        $number &= StringMid($sJson, $iIndex, 1)
+        $iIndex += 1
+
+        If Not StringIsDigit(StringMid($sJson, $iIndex, 1)) Then Return SetError(1, @ScriptLineNumber, 'Expected digit, found: "' & StringMid($sJson, $iIndex, 1) & '" at offset: ' & $iIndex)
+
+        While 1
+            Switch StringMid($sJson, $iIndex, 1)
+                Case '0' To '9'
+                    $number &= StringMid($sJson, $iIndex, 1)
+                    $iIndex += 1
+                    ContinueLoop
+                Case Else
+                    ExitLoop
+            EndSwitch
+        WEnd
+    EndIf
+
+    ;Exponent
+    If StringLower(StringMid($sJson, $iIndex, 1)) = 'e' Then
+        $number &= StringMid($sJson, $iIndex, 1)
+        $iIndex += 1
+
+        Switch StringMid($sJson, $iIndex, 1)
+            Case '+', '-'
+                $number &= StringMid($sJson, $iIndex, 1)
+                $iIndex += 1
+        EndSwitch
+
+        If Not StringIsDigit(StringMid($sJson, $iIndex, 1)) Then Return SetError(1, @ScriptLineNumber, 'Expected digit, found: "' & StringMid($sJson, $iIndex, 1) & '" at offset: ' & $iIndex)
+
+        While 1
+            Switch StringMid($sJson, $iIndex, 1)
+                Case '0' To '9'
+                    $number &= StringMid($sJson, $iIndex, 1)
+                    $iIndex += 1
+                    ContinueLoop
+                Case Else
+                    ExitLoop
+            EndSwitch
+        WEnd
+    EndIf
+
+    Local $value = Execute($number)
+    If @error <> 0 Then
+        Return SetError(1, @ScriptLineNumber, 'Failed to parse number: "' & $value & '" at offset: ' & $iIndex)
+    EndIf
+    Return $value
 EndFunc
 
 Func __json_decode_true(ByRef $sJson, ByRef $iIndex)
