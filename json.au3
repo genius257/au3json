@@ -169,7 +169,7 @@ Func __json_decode_array(ByRef $sJson, ByRef $iIndex)
                 Case ' ', @LF, @CR, @TAB
                     $iIndex += 1
                 Case ']'
-                    Redim $array[$i+1]
+                    Redim $array[$i]
                     $iIndex += 1
                     Return $array
                 Case ''
