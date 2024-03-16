@@ -1,7 +1,7 @@
 #include-once
 #include <String.au3>
 
-Func json_decode($sJson)
+Func _json_decode($sJson)
     local $iIndex = 1
 
     Local $vValue = __json_decode($sJson, $iIndex)
@@ -280,7 +280,7 @@ Func __json_decode_null(ByRef $sJson, ByRef $iIndex)
     Return Null
 EndFunc
 
-Func json_encode($vJson)
+Func _json_encode($vJson)
     Return __json_encode($vJson)
 EndFunc
 
@@ -304,8 +304,7 @@ Func __json_encode(ByRef $v)
             If Not ($v = Null) Then ContinueCase
             Return __json_encode_null($v)
         Case Else
-            ConsoleWriteError("Unsupported type: "&VarGetType($v)&@CRLF)
-            Return SetError(1, 1, Null)
+            Return SetError(1, @ScriptLineNumber, 'Unsupported type: ' & VarGetType($v))
     EndSwitch
 EndFunc
 
@@ -344,7 +343,7 @@ Func __json_encode_null(ByRef $n)
     Return "null"
 EndFunc
 
-Func json_encode_pretty($vJson)
+Func _json_encode_pretty($vJson)
     Return __json_encode_pretty($vJson, 0)
 EndFunc
 
@@ -370,8 +369,7 @@ Func __json_encode_pretty(ByRef $v, $iLevel)
             If Not ($v = Null) Then ContinueCase
             Return __json_encode_null($v)
         Case Else
-            ConsoleWriteError("Unsupported type: "&VarGetType($v)&@CRLF)
-            Return SetError(1, 1, Null)
+            Return SetError(1, @ScriptLineNumber, 'Unsupported type: ' & VarGetType($v))
     EndSwitch
 EndFunc
 
