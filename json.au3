@@ -3,35 +3,44 @@
 
 Func json_decode($sJson)
     local $iIndex = 1
-    Return __json_decode($sJson, $iIndex)
+
+    Local $vValue = __json_decode($sJson, $iIndex)
+
+    Local $error = @error, $extended = @extended
+
+    If @error = 0 And Not (StringMid($sJson, $iIndex, 1) = '') Then Return SetError(1, @ScriptLineNumber, 'Expected end of string, found: "' & StringMid($sJson, $iIndex, 1) & '" at offset: ' & $iIndex)
+
+    Return SetError($error, $extended, $vValue)
 EndFunc
 
 Func __json_decode(ByRef $sJson, ByRef $iIndex)
+    Local $vValue
     While 1
         Switch StringMid($sJson, $iIndex, 1)
             Case '{'
-                Return __json_decode_object($sJson, $iIndex)
+                $vValue = __json_decode_object($sJson, $iIndex)
             Case '['
-                Return __json_decode_array($sJson, $iIndex)
+                $vValue = __json_decode_array($sJson, $iIndex)
             Case '"'
-                Return __json_decode_string($sJson, $iIndex)
-            Case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '-'
-                Return __json_decode_number($sJson, $iIndex)
+                $vValue = __json_decode_string($sJson, $iIndex)
+            Case '0' To '9', '-'
+                $vValue = __json_decode_number($sJson, $iIndex)
             Case 't'
-                Return __json_decode_true($sJson, $iIndex)
+                $vValue = __json_decode_true($sJson, $iIndex)
             Case 'f'
-                Return __json_decode_false($sJson, $iIndex)
+                $vValue = __json_decode_false($sJson, $iIndex)
             Case 'n'
-                Return __json_decode_null($sJson, $iIndex)
+                $vValue = __json_decode_null($sJson, $iIndex)
             Case ' ', @LF, @CR, @TAB
                 $iIndex += 1
+                ContinueLoop
             Case ''
                 ContinueCase
             Case Else
-                ConsoleWriteError(StringMid($sJson, $iIndex, 5)&@CRLF)
-                ConsoleWriteError(@ScriptLineNumber&@TAB&$iIndex&@CRLF)
-                Return SetError(1, 1, Null)
+                Return SetError(1, @ScriptLineNumber, 'Unexpected character: "' & StringMid($sJson, $iIndex, 1) & '" at offset: ' & $iIndex)
         EndSwitch
+
+        Return SetError(@error, @extended, $vValue)
     WEnd
 EndFunc
 
@@ -52,8 +61,7 @@ Func __json_decode_object(ByRef $sJson, ByRef $iIndex)
             Case ''
                 ContinueCase
             Case Else
-                ConsoleWriteError(@ScriptLineNumber&@TAB&$iIndex&@CRLF)
-                Return SetError(1, 1, Null)
+                Return SetError(1, @ScriptLineNumber, 'Unexpected character: "' & StringMid($sJson, $iIndex, 1) & '" at offset: ' & $iIndex)
         EndSwitch
 
         While 1
@@ -66,15 +74,13 @@ Func __json_decode_object(ByRef $sJson, ByRef $iIndex)
                 Case ''
                     ContinueCase
                 Case Else
-                    ConsoleWriteError(@ScriptLineNumber&@TAB&$iIndex&@CRLF)
-                    Return SetError(1, 1, Null)
+                    Return SetError(1, @ScriptLineNumber, 'Unexpected character: "' & StringMid($sJson, $iIndex, 1) & '" at offset: ' & $iIndex)
             EndSwitch
         WEnd
 
         $object[$key] = __json_decode($sJson, $iIndex)
         If @error <> 0 Then
-            ConsoleWriteError(@ScriptLineNumber&@TAB&$iIndex&@CRLF)
-            Return SetError(1, 1, Null)
+            Return SetError(@error, @extended, $object[$key])
         EndIf
 
         While 1
@@ -90,8 +96,7 @@ Func __json_decode_object(ByRef $sJson, ByRef $iIndex)
                 Case ''
                     ContinueCase
                 Case Else
-                    ConsoleWriteError(@ScriptLineNumber&@TAB&$iIndex&@CRLF)
-                    Return SetError(1, 1, Null)
+                    Return SetError(1, @ScriptLineNumber, 'Unexpected character: "' & StringMid($sJson, $iIndex, 1) & '" at offset: ' & $iIndex)
             EndSwitch
         WEnd
     WEnd
@@ -127,12 +132,10 @@ Func __json_decode_string(ByRef $sJson, ByRef $iIndex)
                     Case ''
                         ContinueCase
                     Case Else
-                        ConsoleWriteError(@ScriptLineNumber&@TAB&$iIndex&@CRLF)
-                        Return SetError(1, 1, Null)
+                        Return SetError(1, @ScriptLineNumber, 'Unexpected escape character: "' & $c & '" at offset: ' & $iIndex)
                 EndSwitch
             Case ''
-                ConsoleWriteError(@ScriptLineNumber&@TAB&$iIndex&@CRLF)
-                Return SetError(1, 1, Null)
+                Return SetError(1, @ScriptLineNumber, 'Unexpected end of string at offset: ' & $iIndex)
             Case Else
                 $string &= $c
         EndSwitch
@@ -153,13 +156,11 @@ Func __json_decode_array(ByRef $sJson, ByRef $iIndex)
                 $iIndex += 1
                 ContinueLoop
             Case ''
-                ConsoleWriteError(@ScriptLineNumber&@TAB&$iIndex&@CRLF)
-                Return SetError(1, 1, Null)
+                Return SetError(1, @ScriptLineNumber, 'Unexpected end of string at offset: ' & $iIndex)
             Case Else
                 $array[$i] = __json_decode($sJson, $iIndex)
                 If @error <> 0 Then
-                    ConsoleWriteError(@ScriptLineNumber&@TAB&$iIndex&@CRLF)
-                    Return SetError(1, 1, Null)
+                    Return SetError(@error, @extended, $array[$i])
                 EndIf
                 $i+=1
         EndSwitch
@@ -178,8 +179,7 @@ Func __json_decode_array(ByRef $sJson, ByRef $iIndex)
                 Case ''
                     ContinueCase
                 Case Else
-                    ConsoleWriteError(@ScriptLineNumber&@TAB&$iIndex&StringMid($sJson, $iIndex, 1)&@CRLF)
-                    Return SetError(1, 1, Null)
+                    Return SetError(1, @ScriptLineNumber, 'Expected "," or "]", found: "' & StringMid($sJson, $iIndex, 1) & '" at offset: ' & $iIndex)
             EndSwitch
         WEnd
     WEnd
@@ -258,8 +258,7 @@ EndFunc
 
 Func __json_decode_true(ByRef $sJson, ByRef $iIndex)
     If Not (StringMid($sJson, $iIndex, 4) == "true") Then
-        ConsoleWriteError(@ScriptLineNumber&@TAB&$iIndex&@CRLF)
-        Return SetError(1, 1, Null)
+        Return SetError(1, @ScriptLineNumber, 'Expected "true", found: "' & StringMid($sJson, $iIndex, 4) & '" at offset: ' & $iIndex)
     EndIf
     $iIndex += 4
     Return True
@@ -267,8 +266,7 @@ EndFunc
 
 Func __json_decode_false(ByRef $sJson, ByRef $iIndex)
     If Not (StringMid($sJson, $iIndex, 5) == "false") Then
-        ConsoleWriteError(@ScriptLineNumber&@TAB&$iIndex&@CRLF)
-        Return SetError(1, 1, Null)
+        Return SetError(1, @ScriptLineNumber, 'Expected "false", found: "' & StringMid($sJson, $iIndex, 5) & '" at offset: ' & $iIndex)
     EndIf
     $iIndex += 5
     Return False
@@ -276,8 +274,7 @@ EndFunc
 
 Func __json_decode_null(ByRef $sJson, ByRef $iIndex)
     If Not (StringMid($sJson, $iIndex, 4) == "null") Then
-        ConsoleWriteError(@ScriptLineNumber&@TAB&$iIndex&@CRLF)
-        Return SetError(1, 1, Null)
+        Return SetError(1, @ScriptLineNumber, 'Expected "null", found: "' & StringMid($sJson, $iIndex, 4) & '" at offset: ' & $iIndex)
     EndIf
     $iIndex += 4
     Return Null
