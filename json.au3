@@ -1,5 +1,6 @@
 #include-once
 #include <String.au3>
+#include <Array.au3>
 
 Func _json_decode($sJson)
     local $iIndex = 1
@@ -318,13 +319,68 @@ Func __json_encode_map(ByRef $map)
 EndFunc
 
 Func __json_encode_array(ByRef $array)
-    Local $sJson = "["
-    For $key In $array
-        ;FIXME support multi-dimensional arrays
-        $sJson &= __json_encode($key) & ","
-        IF @error <> 0 Then Return SetError(@error, @extended, Null)
+    Local $iDimensions = UBound($array, 0)
+    Local $aIndices[$iDimensions]
+    For $iIndex = 0 To $iDimensions - 1
+        $aIndices[$iIndex] = 0; Fill array with 0
+        If UBound($array, $iIndex + 1) = 0 Then; Special handling for array dimention with length 0
+            Redim $aIndices[$iIndex+1]; Resize array dimentions to first occurence of length zero, as no child elements can exist
+            $iDimensions = $iIndex + 1
+
+            Local $sArray = "[]"
+
+            ; The loop will wrap the child element(s) in an array x times for each dimension
+            For $iDimension = $iDimensions - 2 To 0 Step -1
+                Local $sArrayParent = "["
+                $sArrayParent &= $sArray
+                For $y = 0 To UBound($array, $iDimension + 1)-2
+                    $sArrayParent &= "," & $sArray
+                Next
+                $sArray = $sArrayParent & "]"
+            Next
+            Return $sArray
+        EndIf
     Next
-    Return StringMid($sJson, 1, StringLen($sJson) - 1) & "]"
+
+    Local $sJson = ""
+    While 1
+        For $iDimension = $iDimensions - 1 To 0 Step -1
+            If $aIndices[$iDimension] = 0 Then
+                $sJson &= "["
+                ContinueLoop
+            EndIf
+            ExitLoop
+        Next
+
+        $sPosition = StringFormat('[%s]', _ArrayToString($aIndices, '][', 0, $iDimensions-1))
+        $sJson &= __json_encode(Execute('$array'&$sPosition))
+
+        If $aIndices[$iDimensions -1 ] < UBound($array, $iDimensions) - 1 Then
+            $sJson &= ","
+        EndIf
+
+        For $iDimension = $iDimensions - 1 To 0 Step -1
+            $aIndices[$iDimension] += 1
+
+            If $aIndices[$iDimension] <= UBound($array, $iDimension + 1)-1 Then
+                ; Current dimension index is not the last element, so we stop regrouping and exit the loop
+                ExitLoop
+            EndIf
+
+            $sJson &= "]"
+
+            If $iDimension = 0 Then ExitLoop 2
+
+            If $aIndices[$iDimension - 1] < UBound($array, $iDimension) - 1 Then
+                ; Parent index position is not the last element, so we add a comma, to accommodate the next sibling element
+                $sJson &= ","
+            EndIf
+
+            ; Reset the index positon of the current dimension
+            $aIndices[$iDimension] = 0
+        Next
+    WEnd
+    Return $sJson
 EndFunc
 
 Func __json_encode_string(ByRef $s)
