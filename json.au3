@@ -310,6 +310,8 @@ Func __json_encode(ByRef $v)
 EndFunc
 
 Func __json_encode_map(ByRef $map)
+    if UBound($map) = 0 Then Return "{}"
+
     Local $sJson = "{"
     For $key In MapKeys($map)
         $sJson &= __json_encode_string($key) & ":" & __json_encode($map[$key]) & ","
@@ -430,6 +432,8 @@ Func __json_encode_pretty(ByRef $v, $iLevel)
 EndFunc
 
 Func __json_encode_map_pretty(ByRef $map, $iLevel)
+    if UBound($map) = 0 Then Return "{}"
+
     Local $sJson = "{" & @CRLF
     For $key In MapKeys($map)
         $sJson &= _StringRepeat($__g_json_sPrettyIndentation, $iLevel + 1) & __json_encode_string($key) & ": " & __json_encode_pretty($map[$key], $iLevel + 1) & "," & @CRLF
