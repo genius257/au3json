@@ -145,7 +145,7 @@ EndFunc
 
 Func __json_decode_array(ByRef $sJson, ByRef $iIndex)
     $iIndex += 1
-    Local $array[100000] ;FIXME: change inital array size and support dynamic size
+    Local $array[16]
     Local $i = 0
     While 1
         Switch StringMid($sJson, $iIndex, 1)
@@ -164,6 +164,7 @@ Func __json_decode_array(ByRef $sJson, ByRef $iIndex)
                     Return SetError(@error, @extended, $array[$i])
                 EndIf
                 $i+=1
+                If $i >= UBound($array) Then Redim $array[UBound($array)*2]
         EndSwitch
 
         While 1
