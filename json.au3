@@ -475,7 +475,8 @@ Func __json_encode_array_pretty(ByRef $array, $iLevel)
     While 1
         For $iDimension = $iDimensions - 1 To 0 Step -1
             If $aIndices[$iDimension] = 0 Then
-                $sJson &= _StringRepeat($__g_json_sPrettyIndentation, $_iLevel) & "[" & @CRLF
+                If $iDimension > 0 Then $sJson &= _StringRepeat($__g_json_sPrettyIndentation, $_iLevel)
+                $sJson &= "[" & @CRLF
                 $_iLevel += 1
                 ContinueLoop
             EndIf
