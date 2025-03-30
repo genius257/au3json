@@ -434,13 +434,17 @@ EndFunc
 
 Func __json_encode_map_pretty(ByRef $map, $iLevel)
     if UBound($map) = 0 Then Return "{}"
+    Local $aKeys = MapKeys($map)
+    Local $indentString = _StringRepeat($__g_json_sPrettyIndentation, $iLevel)
+    Local $nextIndentString = UBound($aKeys) > 0 ? _StringRepeat($__g_json_sPrettyIndentation, $iLevel + 1) : ""
 
-    Local $sJson = "{" & @CRLF
-    For $key In MapKeys($map)
-        $sJson &= _StringRepeat($__g_json_sPrettyIndentation, $iLevel + 1) & __json_encode_string($key) & ": " & __json_encode_pretty($map[$key], $iLevel + 1) & "," & @CRLF
+    Local $sJson = "{"
+    For $key In $aKeys
+        $sJson &= @CRLF & $nextIndentString & __json_encode_string($key) & ": " & __json_encode_pretty($map[$key], $iLevel + 1) & ","
         IF @error <> 0 Then Return SetError(@error, @extended, Null)
     Next
-    Return StringMid($sJson, 1, StringLen($sJson) - 3) & _StringRepeat($__g_json_sPrettyIndentation, $iLevel) & @CRLF & "}"
+    If UBound($aKeys) > 0 Then $sJson = StringMid($sJson, 1, StringLen($sJson) - 1) & @CRLF & $indentString
+    Return $sJson & "}"
 EndFunc
 
 Func __json_encode_array_pretty(ByRef $array, $iLevel)
