@@ -479,7 +479,7 @@ Func __json_encode_array_pretty(ByRef $array, $iLevel)
         Next
 
         $sPosition = StringFormat('[%s]', _ArrayToString($aIndices, '][', 0, $iDimensions-1))
-        $sJson &= _StringRepeat($__g_json_sPrettyIndentation, $_iLevel) & __json_encode(Execute('$array'&$sPosition))
+        $sJson &= _StringRepeat($__g_json_sPrettyIndentation, $_iLevel) & __json_encode_pretty(Execute('$array'&$sPosition), $_iLevel + 1)
 
         If $aIndices[$iDimensions -1 ] < UBound($array, $iDimensions) - 1 Then
             $sJson &= ","
