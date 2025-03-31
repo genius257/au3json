@@ -402,18 +402,22 @@ Func __json_encode_null(ByRef $n)
     Return "null"
 EndFunc
 
-Func _json_encode_pretty($vJson)
-    Return __json_encode_pretty($vJson, 0)
+Func _json_encode_pretty($vJson, $sIndentation = 4, $fnReplacer = Null)
+    If (Not IsInt($sIndentation)) And (Not IsString($sIndentation)) Then $sIndentation = "    "
+    If IsInt($sIndentation) Then $sIndentation = _StringRepeat(" ", $sIndentation)
+
+    If Not IsFunc($fnReplacer) Then $fnReplacer = Null
+
+    Return __json_encode_pretty($vJson, 0, $sIndentation, $fnReplacer)
 EndFunc
 
-Global $__g_json_sPrettyIndentation = "    "
 
-Func __json_encode_pretty(ByRef $v, $iLevel)
+Func __json_encode_pretty(ByRef $v, $iLevel, $sIndentation, $fnReplacer)
     Switch VarGetType($v)
         Case "Map"
-            Return __json_encode_map_pretty($v, $iLevel)
+            Return __json_encode_map_pretty($v, $iLevel, $sIndentation, $fnReplacer)
         Case "Array"
-            Return __json_encode_array_pretty($v, $iLevel)
+            Return __json_encode_array_pretty($v, $iLevel, $sIndentation, $fnReplacer)
         Case "String"
             Return __json_encode_string($v)
         Case "Int32"
@@ -428,26 +432,27 @@ Func __json_encode_pretty(ByRef $v, $iLevel)
             If Not ($v = Null) Then ContinueCase
             Return __json_encode_null($v)
         Case Else
-            Return SetError(1, @ScriptLineNumber, 'Unsupported type: ' & VarGetType($v))
+            If IsFunc($fnReplacer) Then Return __json_encode_pretty(Call($fnReplacer, $v), $iLevel, $sIndentation, Null)
+            Return __json_encode_null($v)
     EndSwitch
 EndFunc
 
-Func __json_encode_map_pretty(ByRef $map, $iLevel)
+Func __json_encode_map_pretty(ByRef $map, $iLevel, $sIndentation, $fnReplacer)
     if UBound($map) = 0 Then Return "{}"
     Local $aKeys = MapKeys($map)
-    Local $indentString = _StringRepeat($__g_json_sPrettyIndentation, $iLevel)
-    Local $nextIndentString = UBound($aKeys) > 0 ? _StringRepeat($__g_json_sPrettyIndentation, $iLevel + 1) : ""
+    Local $indentString = _StringRepeat($sIndentation, $iLevel)
+    Local $nextIndentString = UBound($aKeys) > 0 ? _StringRepeat($sIndentation, $iLevel + 1) : ""
 
     Local $sJson = "{"
     For $key In $aKeys
-        $sJson &= @LF & $nextIndentString & __json_encode_string($key) & ": " & __json_encode_pretty($map[$key], $iLevel + 1) & ","
+        $sJson &= @LF & $nextIndentString & __json_encode_string($key) & ": " & __json_encode_pretty($map[$key], $iLevel + 1, $sIndentation, $fnReplacer) & ","
         IF @error <> 0 Then Return SetError(@error, @extended, Null)
     Next
     If UBound($aKeys) > 0 Then $sJson = StringMid($sJson, 1, StringLen($sJson) - 1) & @LF & $indentString
     Return $sJson & "}"
 EndFunc
 
-Func __json_encode_array_pretty(ByRef $array, $iLevel)
+Func __json_encode_array_pretty(ByRef $array, $iLevel, $sIndentation, $fnReplacer)
     Local $iDimensions = UBound($array, 0)
     Local $aIndices[$iDimensions]
     For $iIndex = 0 To $iDimensions - 1
@@ -460,12 +465,12 @@ Func __json_encode_array_pretty(ByRef $array, $iLevel)
 
             ; The loop will wrap the child element(s) in an array x times for each dimension
             For $iDimension = $iDimensions - 2 To 0 Step -1
-                Local $sArrayParent = _StringRepeat($__g_json_sPrettyIndentation, $iLevel + $iDimension - 1) & "[" & @LF & _StringRepeat($__g_json_sPrettyIndentation, $iLevel + $iDimension + 1)
+                Local $sArrayParent = _StringRepeat($sIndentation, $iLevel + $iDimension - 1) & "[" & @LF & _StringRepeat($sIndentation, $iLevel + $iDimension + 1)
                 $sArrayParent &= $sArray
                 For $y = 0 To UBound($array, $iDimension + 1)-2
-                    $sArrayParent &= "," & @LF & _StringRepeat($__g_json_sPrettyIndentation, $iLevel + $iDimension + 1) & $sArray
+                    $sArrayParent &= "," & @LF & _StringRepeat($sIndentation, $iLevel + $iDimension + 1) & $sArray
                 Next
-                $sArray = $sArrayParent & @LF & _StringRepeat($__g_json_sPrettyIndentation, $iLevel + $iDimension) & "]"
+                $sArray = $sArrayParent & @LF & _StringRepeat($sIndentation, $iLevel + $iDimension) & "]"
             Next
             Return $sArray
         EndIf
@@ -475,7 +480,7 @@ Func __json_encode_array_pretty(ByRef $array, $iLevel)
     While 1
         For $iDimension = $iDimensions - 1 To 0 Step -1
             If $aIndices[$iDimension] = 0 Then
-                If $iDimension > 0 Then $sJson &= _StringRepeat($__g_json_sPrettyIndentation, $_iLevel)
+                If $iDimension > 0 Then $sJson &= _StringRepeat($sIndentation, $_iLevel)
                 $sJson &= "[" & @LF
                 $_iLevel += 1
                 ContinueLoop
@@ -484,7 +489,7 @@ Func __json_encode_array_pretty(ByRef $array, $iLevel)
         Next
 
         $sPosition = StringFormat('[%s]', _ArrayToString($aIndices, '][', 0, $iDimensions-1))
-        $sJson &= _StringRepeat($__g_json_sPrettyIndentation, $_iLevel) & __json_encode_pretty(Execute('$array'&$sPosition), $_iLevel + 1)
+        $sJson &= _StringRepeat($sIndentation, $_iLevel) & __json_encode_pretty(Execute('$array'&$sPosition), $_iLevel, $sIndentation, $fnReplacer)
 
         If $aIndices[$iDimensions -1 ] < UBound($array, $iDimensions) - 1 Then
             $sJson &= ","
@@ -501,7 +506,7 @@ Func __json_encode_array_pretty(ByRef $array, $iLevel)
             EndIf
 
             $_iLevel -= 1
-            $sJson &= _StringRepeat($__g_json_sPrettyIndentation, $_iLevel) & "]"
+            $sJson &= _StringRepeat($sIndentation, $_iLevel) & "]"
 
             If $iDimension = 0 Then ExitLoop 2
 
