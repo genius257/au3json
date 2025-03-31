@@ -282,16 +282,19 @@ Func __json_decode_null(ByRef $sJson, ByRef $iIndex)
     Return Null
 EndFunc
 
-Func _json_encode($vJson)
-    Return __json_encode($vJson)
+Func _json_encode($vJson, $fnReplacer = Null)
+
+    If Not IsFunc($fnReplacer) Then $fnReplacer = Null
+
+    Return __json_encode($vJson, $fnReplacer)
 EndFunc
 
-Func __json_encode(ByRef $v)
+Func __json_encode(ByRef $v, $fnReplacer)
     Switch VarGetType($v)
         Case "Map"
-            Return __json_encode_map($v)
+            Return __json_encode_map($v, $fnReplacer)
         Case "Array"
-            Return __json_encode_array($v)
+            Return __json_encode_array($v, $fnReplacer)
         Case "String"
             Return __json_encode_string($v)
         Case "Int32"
@@ -306,22 +309,23 @@ Func __json_encode(ByRef $v)
             If Not ($v = Null) Then ContinueCase
             Return __json_encode_null($v)
         Case Else
-            Return SetError(1, @ScriptLineNumber, 'Unsupported type: ' & VarGetType($v))
+            If IsFunc($fnReplacer) Then Return __json_encode(Call($fnReplacer, $v), $iLevel, Null)
+            Return __json_encode_null($v)
     EndSwitch
 EndFunc
 
-Func __json_encode_map(ByRef $map)
+Func __json_encode_map(ByRef $map, $fnReplacer)
     if UBound($map) = 0 Then Return "{}"
 
     Local $sJson = "{"
     For $key In MapKeys($map)
-        $sJson &= __json_encode_string($key) & ":" & __json_encode($map[$key]) & ","
+        $sJson &= __json_encode_string($key) & ":" & __json_encode($map[$key], $fnReplacer) & ","
         IF @error <> 0 Then Return SetError(@error, @extended, Null)
     Next
     Return StringMid($sJson, 1, StringLen($sJson) - 1) & "}"
 EndFunc
 
-Func __json_encode_array(ByRef $array)
+Func __json_encode_array(ByRef $array, $fnReplacer)
     Local $iDimensions = UBound($array, 0)
     Local $aIndices[$iDimensions]
     For $iIndex = 0 To $iDimensions - 1
@@ -356,7 +360,7 @@ Func __json_encode_array(ByRef $array)
         Next
 
         $sPosition = StringFormat('[%s]', _ArrayToString($aIndices, '][', 0, $iDimensions-1))
-        $sJson &= __json_encode(Execute('$array'&$sPosition))
+        $sJson &= __json_encode(Execute('$array'&$sPosition), $fnReplacer)
 
         If $aIndices[$iDimensions -1 ] < UBound($array, $iDimensions) - 1 Then
             $sJson &= ","
