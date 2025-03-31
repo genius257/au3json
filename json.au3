@@ -440,10 +440,10 @@ Func __json_encode_map_pretty(ByRef $map, $iLevel)
 
     Local $sJson = "{"
     For $key In $aKeys
-        $sJson &= @CRLF & $nextIndentString & __json_encode_string($key) & ": " & __json_encode_pretty($map[$key], $iLevel + 1) & ","
+        $sJson &= @LF & $nextIndentString & __json_encode_string($key) & ": " & __json_encode_pretty($map[$key], $iLevel + 1) & ","
         IF @error <> 0 Then Return SetError(@error, @extended, Null)
     Next
-    If UBound($aKeys) > 0 Then $sJson = StringMid($sJson, 1, StringLen($sJson) - 1) & @CRLF & $indentString
+    If UBound($aKeys) > 0 Then $sJson = StringMid($sJson, 1, StringLen($sJson) - 1) & @LF & $indentString
     Return $sJson & "}"
 EndFunc
 
@@ -460,12 +460,12 @@ Func __json_encode_array_pretty(ByRef $array, $iLevel)
 
             ; The loop will wrap the child element(s) in an array x times for each dimension
             For $iDimension = $iDimensions - 2 To 0 Step -1
-                Local $sArrayParent = _StringRepeat($__g_json_sPrettyIndentation, $iLevel + $iDimension - 1) & "[" & @CRLF & _StringRepeat($__g_json_sPrettyIndentation, $iLevel + $iDimension + 1)
+                Local $sArrayParent = _StringRepeat($__g_json_sPrettyIndentation, $iLevel + $iDimension - 1) & "[" & @LF & _StringRepeat($__g_json_sPrettyIndentation, $iLevel + $iDimension + 1)
                 $sArrayParent &= $sArray
                 For $y = 0 To UBound($array, $iDimension + 1)-2
-                    $sArrayParent &= "," & @CRLF & _StringRepeat($__g_json_sPrettyIndentation, $iLevel + $iDimension + 1) & $sArray
+                    $sArrayParent &= "," & @LF & _StringRepeat($__g_json_sPrettyIndentation, $iLevel + $iDimension + 1) & $sArray
                 Next
-                $sArray = $sArrayParent & @CRLF & _StringRepeat($__g_json_sPrettyIndentation, $iLevel + $iDimension) & "]"
+                $sArray = $sArrayParent & @LF & _StringRepeat($__g_json_sPrettyIndentation, $iLevel + $iDimension) & "]"
             Next
             Return $sArray
         EndIf
@@ -476,7 +476,7 @@ Func __json_encode_array_pretty(ByRef $array, $iLevel)
         For $iDimension = $iDimensions - 1 To 0 Step -1
             If $aIndices[$iDimension] = 0 Then
                 If $iDimension > 0 Then $sJson &= _StringRepeat($__g_json_sPrettyIndentation, $_iLevel)
-                $sJson &= "[" & @CRLF
+                $sJson &= "[" & @LF
                 $_iLevel += 1
                 ContinueLoop
             EndIf
@@ -490,7 +490,7 @@ Func __json_encode_array_pretty(ByRef $array, $iLevel)
             $sJson &= ","
         EndIf
 
-        $sJson &= @CRLF
+        $sJson &= @LF
 
         For $iDimension = $iDimensions - 1 To 0 Step -1
             $aIndices[$iDimension] += 1
@@ -510,7 +510,7 @@ Func __json_encode_array_pretty(ByRef $array, $iLevel)
                 $sJson &= ","
             EndIf
 
-            $sJson &= @CRLF
+            $sJson &= @LF
 
             ; Reset the index positon of the current dimension
             $aIndices[$iDimension] = 0
