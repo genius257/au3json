@@ -26,5 +26,5 @@ Global Const $sJson = '{"array": [], "object": {}, "string": "", "number": 1, "t
 
     assertSame(0, @error, $sJson2)
 
-    assertSame(StringFormat('{\r\n    "array": [],\r\n    "object": {},\r\n    "string": "",\r\n    "number": 1,\r\n    "true": true,\r\n    "false": false,\r\n    "null": null\r\n}'), $sJson2)
+    assertSame(StringFormat('{\n    "array": [],\n    "object": {},\n    "string": "",\n    "number": 1,\n    "true": true,\n    "false": false,\n    "null": null\n}'), $sJson2)
 #EndRegion Encode pretty

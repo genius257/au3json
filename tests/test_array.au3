@@ -26,5 +26,5 @@ Global Const $sJson = '[{},[],"",1,true,false,null]'
 
     assertSame(0, @error, $sJson2)
 
-    assertSame(StringFormat('[\r\n    {},\r\n    [],\r\n    "",\r\n    1,\r\n    true,\r\n    false,\r\n    null\r\n]'), $sJson2)
+    assertSame(StringFormat('[\n    {},\n    [],\n    "",\n    1,\n    true,\n    false,\n    null\n]'), $sJson2)
 #EndRegion Encode pretty
